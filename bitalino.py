@@ -501,25 +501,49 @@ class BITalino(object):
                         raise Exception(ExceptionCode.CONTACTING_DEVICE)
                 data += self.socket.recv(1)      
         return data
+
+
+macAddress = "20:15:10:26:62:54"
+    
+batteryThreshold = 30
+
+acqChannels = [0,3,4,5]
+samplingRate = 100
+nSamples = 10
+digitalOutput = [0,0,1,1]
+
+cmin = 208
+cmax = 312
+
+# EMG parameters
+vcc = 3.3
+gemg = 1000
+    
+def usage():
+    print "Please input your option"
+    print "1-Set Exercise"
+    print "2-Train"
             
 if __name__ == '__main__':
-    macAddress = "20:15:10:26:62:94"
+
+
+    # macAddress = "20:15:10:26:62:94"
     
-    batteryThreshold = 30
+    # batteryThreshold = 30
 
-    acqChannels = [0,3,4,5]
-    samplingRate = 100
-    nSamples = 10
-    digitalOutput = [0,0,1,1]
+    # acqChannels = [0,3,4,5]
+    # samplingRate = 100
+    # nSamples = 10
+    # digitalOutput = [0,0,1,1]
     
 
-    # ACC parameters
-    cmin = 208
-    cmax = 312
+    # # ACC parameters
+    # cmin = 208
+    # cmax = 312
 
-    # EMG parameters
-    vcc = 3.3
-    gemg = 1000
+    # # EMG parameters
+    # vcc = 3.3
+    # gemg = 1000
 
     # Connect to BITalino
     device = BITalino(macAddress)
@@ -535,6 +559,11 @@ if __name__ == '__main__':
     
     count = 1
     i = 0
+
+    usage()
+    opt = input()
+
+    print "opt: " + str(opt)
     while True:
         # Read samples
         mat = device.read(nSamples)
