@@ -18,7 +18,14 @@ import time
 import select
 import time
 import validator
+import httplib
 
+url = "10.123.162.112:80"
+def toIvo(d):
+    conn = httplib.HTTPSConnection(url)
+    conn.request("POST", "", {d}, {})
+    res = conn.getresponse()
+    print res.status, res.reason
 
 def find():
     """
@@ -656,9 +663,24 @@ if __name__ == '__main__':
     emg_asArray = validator.file_to_array("emg.csv")
     xv_asArray = validator.file_to_array("accx.csv")
     zv_asArray = validator.file_to_array("accz.csv")
-    validator.emg_isValid(emg_asArray)   
-    validator.acc_isValid(xv_asArray, zv_asArray)      
+    t_emg = validator.emg_isValid(emg_asArray)   
+    t_acc = validator.acc_isValid(xv_asArray, zv_asArray)      
 
+    t_send = -1
+    f = file('result.txt', 'w')
+    if t_emg and t_acc:
+        f.write("3\n")
+
+    elif t_emg:
+        f.write("2\n")
+
+    elif t_acc:
+        f.write("1\n")
+
+    else:
+        f.write("0\n")
+
+    #toIvo(t_send)
     # if(validate(adc_x, adc_y, adc_z)/len(adc_x)*2 > 0.3):
     #     print "FAIL"
 
