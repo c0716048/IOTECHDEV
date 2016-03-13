@@ -16,6 +16,9 @@ import serial
 import struct
 import time
 import select
+import time
+import validator
+
 
 def find():
     """
@@ -503,7 +506,7 @@ class BITalino(object):
         return data
 
 
-macAddress = "20:15:10:26:62:54"
+macAddress = "20:15:10:26:62:94"
     
 batteryThreshold = 30
 
@@ -518,12 +521,47 @@ cmax = 312
 # EMG parameters
 vcc = 3.3
 gemg = 1000
-    
-def usage():
-    print "Please input your option"
-    print "1-Set Exercise"
-    print "2-Train"
-            
+
+
+
+#comparable values
+
+
+# def usage():
+#     print "Please input your option"
+#     print "1-Set Exercise"
+#     print "2-Train"
+
+
+def validate(x, y, z):
+    size = len(x)-1
+    nerror = 0
+    firstq = int(size/3)
+    secq = int(size/2)
+    for v in range(0, firstq):
+        if(abs(z[v]) < 0.7):
+            nerror += 1
+
+        if(abs(x[v]) > 0.5):
+            nerror += 1
+
+    for v in range(firstq, secq):
+        if (abs(z[v]) > 0.7 or abs(z[v]) < 0.3):
+            nerror += 1
+
+        if (abs(x[v])  < 0.6):
+            nerror +=1
+
+    for v in range(secq, size):
+        if(abs(z[v]) < 0.8):
+            nerror += 1
+
+        if(abs(x[v]) > 0.6):
+            nerror += 1
+
+    return nerror
+
+
 if __name__ == '__main__':
 
 
@@ -549,7 +587,7 @@ if __name__ == '__main__':
     device = BITalino(macAddress)
 
     # Set battery threshold
-    print device.battery(batteryThreshold)
+    #print device.battery(batteryThreshold)
     
     # Read BITalino version
     device.version()
@@ -560,36 +598,101 @@ if __name__ == '__main__':
     count = 1
     i = 0
 
-    usage()
-    opt = input()
+    #usage()
+    #opt = input()
 
-    print "opt: " + str(opt)
-    while True:
+    #print "opt: " + str(opt)
+    adc_emg = None
+    deltaT = 0
+    ti = int(round(time.time() * 1000))
+    adc_x = []
+    adc_y = []
+    adc_z = []
+    f = file('accx.csv', 'w')
+    fl = file('accz.csv', 'w')
+    f1 = file('emg.csv', 'w')
+    while deltaT < 5000:
         # Read samples
+        #ti = time.time()
         mat = device.read(nSamples)
 
-        # adc_x   = mat[i, 7]
-        # adc_y   = mat[i, 8]
-        # adc_z   = mat[i, 6]
+        adc_x   = mat[:, 7]
+        adc_y   = mat[:, 8]
+        adc_z   = mat[:, 6]
         adc_emg = mat[:, 5]
+        c=0
         
-        # accx = ((adc_x-cmin)/(cmax-cmin))*2-1
-        # accy = ((adc_y-cmin)/(cmax-cmin))*2-1
-        # accz = ((adc_z-cmin)/(cmax-cmin))*2-1
-        for ent in adc_emg:
-            emg = (((ent/2**10)-0.5)*vcc)
-            print emg
+        for c in range(len(adc_x) -1):
+            accx = ((adc_x[c]-cmin)/(cmax-cmin))*2-1 
+            accy = ((adc_y[c]-cmin)/(cmax-cmin))*2-1
+            accz = ((adc_z[c]-cmin)/(cmax-cmin))*2-1
+            hip = math.hypot(accy, accz)
+            hipy= math.hypot(accx, accz)
+            pitch = math.atan2(accx, hip)
+            roll = math.atan2(accy, hipy)
+            pitch = math.degrees(pitch)
+            roll = math.degrees(roll)
+            tf = int(round(time.time() * 1000))
+            deltaT = tf-ti
+            #f = file('acc.csv', 'w')
+            #print accx, accy, accz#, pitch, roll
+            f.write(str(accx) + "\n")
+            #f.write(str(accy))
+            fl.write(str(accz) + "\n")
+            #f.close()
+            for ent in adc_emg:
+                emg = (((ent/2**10)-0.5)*vcc)
+                #print emg
+                f1.write(str(emg) + "\n")
 
+            i = i+1
+            count += 1
+            if(i==99):
+                i=0
+
+    f.close()
+    f1.close()
+    fl.close
+    emg_asArray = validator.file_to_array("emg.csv")
+    xv_asArray = validator.file_to_array("accx.csv")
+    zv_asArray = validator.file_to_array("accz.csv")
+    validator.emg_isValid(emg_asArray)   
+    validator.acc_isValid(xv_asArray, zv_asArray)      
+
+    # if(validate(adc_x, adc_y, adc_z)/len(adc_x)*2 > 0.3):
+    #     print "FAIL"
+
+    # else:
+    #     print "GOT IT"    
+
+    # print validate(adc_x, adc_y, adc_z)
+
+            #print adc_x[c], adc_y[c], adc_z[c]
+        
         # print "x, y, z :", "%.3f" % accx ,"%.3f" % accy, "%.3f" % accz
         #print count, "%.3f" % emg
 
-        i = i+1
-        count += 1
-        if(i==99):
-            i=0
+        
+        #done = input()
 
+
+    # tf = time.time()
+    # deltaT = tf-ti
+
+    # validate(deltaT, adc_emg)
     # Stop acquisition
     device.stop()
     
     # Close connection
     device.close()
+
+    # validate(deltaT, adc_emg)
+    # if(opt==1):
+    #     setTh()
+
+    # elif(opt==2):
+    #     train()
+
+
+
+    
