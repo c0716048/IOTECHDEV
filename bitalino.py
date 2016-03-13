@@ -670,16 +670,16 @@ if __name__ == '__main__':
     f = file('result.txt', 'w')
     if t_emg and t_acc:
         f.write("3\n")
-
+        print "Well Done"
     elif t_emg:
         f.write("2\n")
-
+        print "Wrist movement failed"
     elif t_acc:
         f.write("1\n")
-
+        print "Arm movement failed"
     else:
         f.write("0\n")
-
+        print "Wrist and Arm movement failed"
     #toIvo(t_send)
     # if(validate(adc_x, adc_y, adc_z)/len(adc_x)*2 > 0.3):
     #     print "FAIL"
@@ -707,7 +707,7 @@ if __name__ == '__main__':
     
     # Close connection
     device.close()
-
+    #print t_send
     # validate(deltaT, adc_emg)
     # if(opt==1):
     #     setTh()
